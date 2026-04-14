@@ -2,12 +2,7 @@
   "name": "psyche-mirror",
   "private": true,
   "scripts": {
-    "dev": "turbo dev",
-    "build": "turbo build",
-    "lint": "turbo lint"
-  },
-  "devDependencies": {
-    "turbo": "^2.4.0",
-    "typescript": "^5.7.0"
+    "dev": "cd apps/web && npm run dev",
+    "build": "cd apps/web && npm run build"
   }
 }
