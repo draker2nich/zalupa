@@ -15,7 +15,6 @@
     "@anthropic-ai/sdk": "^0.88.0",
     "@auth/prisma-adapter": "^2.7.0",
     "@prisma/client": "^6.19.3",
-    "@psyche-mirror/shared": "workspace:*",
     "dotenv": "^17.4.2",
     "lucide-react": "^1.8.0",
     "next": "16.2.3",
