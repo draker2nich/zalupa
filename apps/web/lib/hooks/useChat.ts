@@ -9,6 +9,32 @@ export interface ChatMessage {
   persona?: string;
 }
 
+function parseSSEChunk(chunk: string): Array<{ type: string; text?: string }> {
+  return chunk
+    .split("\n")
+    .filter((l) => l.startsWith("data: "))
+    .map((line) => {
+      try {
+        return JSON.parse(line.slice(6));
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean);
+}
+
+function updateLastMessage(
+  prev: ChatMessage[],
+  content: string
+): ChatMessage[] {
+  const updated = [...prev];
+  const last = updated.at(-1);
+  if (last) {
+    updated[updated.length - 1] = { ...last, content };
+  }
+  return updated;
+}
+
 export function useChat(
   personaId: string,
   sessionMode: string,
@@ -20,7 +46,6 @@ export function useChat(
 
   const send = useCallback(
     async (text: string, action?: string) => {
-      // Add user message to state
       if (text && !action) {
         const userMsg: ChatMessage = {
           role: "user",
@@ -57,7 +82,6 @@ export function useChat(
         const decoder = new TextDecoder();
         let aiContent = "";
 
-        // Add placeholder AI message
         setMessages((prev) => [
           ...prev,
           {
@@ -68,32 +92,15 @@ export function useChat(
           },
         ]);
 
-        while (true) {
+        for (;;) {
           const { done, value } = await reader.read();
           if (done) break;
 
-          const chunk = decoder.decode(value);
-          const lines = chunk
-            .split("\n")
-            .filter((l) => l.startsWith("data: "));
-
-          for (const line of lines) {
-            try {
-              const data = JSON.parse(line.slice(6));
-
-              if (data.type === "delta") {
-                aiContent += data.text;
-                setMessages((prev) => {
-                  const updated = [...prev];
-                  updated[updated.length - 1] = {
-                    ...updated[updated.length - 1],
-                    content: aiContent,
-                  };
-                  return updated;
-                });
-              }
-            } catch {
-              // Skip malformed chunks
+          const events = parseSSEChunk(decoder.decode(value));
+          for (const evt of events) {
+            if (evt.type === "delta" && evt.text) {
+              aiContent += evt.text;
+              setMessages((prev) => updateLastMessage(prev, aiContent));
             }
           }
         }

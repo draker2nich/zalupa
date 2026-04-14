@@ -13,13 +13,16 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
+    "types": ["node"],
     "plugins": [
       {
         "name": "next"
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@psyche-mirror/shared": ["../../packages/shared/src/index.ts"],
+      "@psyche-mirror/shared/*": ["../../packages/shared/src/*"]
     }
   },
   "include": [

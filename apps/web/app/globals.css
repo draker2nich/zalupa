@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
 :root {
+  --font-sans: var(--font-inter), system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-serif: var(--font-fraunces), Georgia, 'Times New Roman', serif;
+
   --bg: #FAFAF9;
   --surface: #FFFFFF;
   --surface-hover: #F5F5F4;
@@ -22,11 +25,15 @@
 * { box-sizing: border-box; }
 
 body {
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: var(--font-sans);
   background: var(--bg);
   color: var(--text);
   margin: 0;
   -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-serif);
 }
 
 ::-webkit-scrollbar { width: 4px; }

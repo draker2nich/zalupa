@@ -52,18 +52,25 @@ export function getModelConfig(
   return MODEL_MAP[ACTION_TIER_MAP[action] || "medium"];
 }
 
+// Prices per token (USD)
+const PRICE_PER_M = 1_000_000;
+
+const rates: Record<string, { input: number; output: number }> = {
+  "claude-haiku-4-5-20251001": {
+    input: 0.8 / PRICE_PER_M,
+    output: 4 / PRICE_PER_M,
+  },
+  "claude-sonnet-4-6": {
+    input: 3 / PRICE_PER_M,
+    output: 15 / PRICE_PER_M,
+  },
+};
+
 export function estimateCost(
   model: string,
   tokensIn: number,
   tokensOut: number
 ): number {
-  const rates: Record<string, { in: number; out: number }> = {
-    "claude-haiku-4-5-20251001": {
-      in: 0.8 / 1_000_000,
-      out: 4.0 / 1_000_000,
-    },
-    "claude-sonnet-4-6": { in: 3.0 / 1_000_000, out: 15.0 / 1_000_000 },
-  };
-  const rate = rates[model] || rates["claude-sonnet-4-6"];
-  return tokensIn * rate.in + tokensOut * rate.out;
+  const rate = rates[model] ?? rates["claude-sonnet-4-6"];
+  return tokensIn * rate.input + tokensOut * rate.output;
 }
