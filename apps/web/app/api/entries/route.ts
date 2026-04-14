@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser, unauthorized, badRequest } from "@/lib/api-helpers";
-import { createEntrySchema } from "@psyche-mirror/shared";
 
-// GET /api/entries — list entries for current user
+// GET /api/entries
 export async function GET(req: NextRequest) {
   const user = await getAuthUser();
   if (!user) return unauthorized();
@@ -20,7 +19,7 @@ export async function GET(req: NextRequest) {
     include: {
       messages: {
         orderBy: { createdAt: "asc" },
-        take: 1, // just first message for preview
+        take: 1,
       },
     },
   });
@@ -31,21 +30,21 @@ export async function GET(req: NextRequest) {
   });
 }
 
-// POST /api/entries — create new entry
+// POST /api/entries
 export async function POST(req: NextRequest) {
   const user = await getAuthUser();
   if (!user) return unauthorized();
 
   const body = await req.json();
-  const parsed = createEntrySchema.safeParse(body);
-  if (!parsed.success) return badRequest(parsed.error.message);
+  const sessionMode = body.sessionMode || "free";
+  const personaId = body.personaId || "mirror";
+
+  if (!["morning", "evening", "free"].includes(sessionMode)) {
+    return badRequest("Invalid sessionMode");
+  }
 
   const entry = await prisma.journalEntry.create({
-    data: {
-      userId: user.id,
-      sessionMode: parsed.data.sessionMode,
-      personaId: parsed.data.personaId,
-    },
+    data: { userId: user.id, sessionMode, personaId },
   });
 
   return NextResponse.json(entry, { status: 201 });
