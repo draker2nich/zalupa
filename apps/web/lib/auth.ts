@@ -16,7 +16,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   );
 }
 
-if (process.env.NODE_ENV === "development") {
+if (process.env.ENABLE_DEV_LOGIN === "true" || process.env.NODE_ENV === "development") {
   providers.push(
     Credentials({
       name: "Dev Login",
