@@ -1,13 +1,12 @@
 import NextAuth from "next-auth";
+import type { Provider } from "next-auth/providers";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 
-// Build providers list dynamically based on available env vars
-const providers: Parameters<typeof NextAuth>[0]["providers"] = [];
+const providers: Provider[] = [];
 
-// Google — only if credentials are set
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   providers.push(
     Google({
@@ -17,7 +16,6 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   );
 }
 
-// Dev-only credentials provider for local testing
 if (process.env.NODE_ENV === "development") {
   providers.push(
     Credentials({
@@ -29,7 +27,6 @@ if (process.env.NODE_ENV === "development") {
         const email = credentials?.email as string;
         if (!email) return null;
 
-        // Find or create user
         let user = await prisma.user.findUnique({ where: { email } });
         if (!user) {
           user = await prisma.user.create({
@@ -75,5 +72,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: {
     signIn: "/auth/signin",
   },
-  debug: process.env.NODE_ENV === "development",
 });
