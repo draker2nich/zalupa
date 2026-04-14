@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                  String         @id @default(uuid()) @db.Uuid
+  email               String         @unique
+  name                String?
+  avatarUrl           String?        @map("avatar_url")
+  plan                String         @default("free")
+  onboardingCompleted Boolean        @default(false) @map("onboarding_completed")
+  goals               String[]       @default([])
+  preferredTime       String?        @map("preferred_time")
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @updatedAt @map("updated_at")
+  entries             JournalEntry[]
+  habits              Habit[]
+  intentions          Intention[]
+
+  @@map("users")
+}
+
+model JournalEntry {
+  id          String           @id @default(uuid()) @db.Uuid
+  userId      String           @map("user_id") @db.Uuid
+  entryDate   DateTime         @default(now()) @map("entry_date") @db.Date
+  title       String?
+  moodLabel   String?          @map("mood_label")
+  moodScore   Int?             @map("mood_score")
+  tags        String[]         @default([])
+  sessionMode String           @default("free") @map("session_mode")
+  personaId   String           @default("mirror") @map("persona_id")
+  isCompleted Boolean          @default(false) @map("is_completed")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages    JournalMessage[]
+
+  @@index([userId, entryDate(sort: Desc)])
+  @@map("journal_entries")
+}
+
+model JournalMessage {
+  id             String            @id @default(uuid()) @db.Uuid
+  entryId        String            @map("entry_id") @db.Uuid
+  role           String
+  content        String
+  modelUsed      String?           @map("model_used")
+  tokensIn       Int?              @map("tokens_in")
+  tokensOut      Int?              @map("tokens_out")
+  responseTimeMs Int?              @map("response_time_ms")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  entry          JournalEntry      @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  feedback       JournalFeedback[]
+
+  @@index([entryId, createdAt(sort: Asc)])
+  @@map("journal_messages")
+}
+
+model JournalFeedback {
+  id        String         @id @default(uuid()) @db.Uuid
+  messageId String         @map("message_id") @db.Uuid
+  feedback  String
+  createdAt DateTime       @default(now()) @map("created_at")
+  message   JournalMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@map("journal_feedback")
+}
+
+model PromptVersion {
+  id            String   @id @default(uuid()) @db.Uuid
+  agentSlug     String   @map("agent_slug")
+  name          String
+  systemPrompt  String   @map("system_prompt")
+  modelOverride String?  @map("model_override")
+  version       Int      @default(1)
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("prompt_versions")
+}
+
+model AiRequestLog {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String?  @map("user_id") @db.Uuid
+  agentSlug      String   @map("agent_slug")
+  model          String
+  tokensIn       Int?     @map("tokens_in")
+  tokensOut      Int?     @map("tokens_out")
+  costUsd        Decimal? @map("cost_usd") @db.Decimal(10, 6)
+  responseTimeMs Int?     @map("response_time_ms")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt(sort: Desc)])
+  @@map("ai_request_logs")
+}
+
+model Habit {
+  id        String     @id @default(uuid()) @db.Uuid
+  userId    String     @map("user_id") @db.Uuid
+  name      String
+  emoji     String     @default("✅")
+  sortOrder Int        @default(0) @map("sort_order")
+  createdAt DateTime   @default(now()) @map("created_at")
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs      HabitLog[]
+
+  @@map("habits")
+}
+
+model HabitLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  habitId   String   @map("habit_id") @db.Uuid
+  logDate   DateTime @default(now()) @map("log_date") @db.Date
+  createdAt DateTime @default(now()) @map("created_at")
+  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  @@unique([habitId, logDate])
+  @@map("habit_logs")
+}
+
+model Intention {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  emoji     String   @default("🎯")
+  title     String
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("intentions")
+}
